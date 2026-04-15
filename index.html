@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="QuizBlast — A fun, vibrant quiz game. Pick your difficulty and test your knowledge!" />
+  <title>QuizBlast — Test Your Knowledge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Floating Background Blobs -->
+  <div class="blobs" aria-hidden="true">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+
+  <!-- ===================================================
+       SCREEN 1 — HOME
+       =================================================== -->
+  <section id="screen-home" class="screen active" aria-label="Home">
+
+    <div class="home-content">
+
+      <!-- Logo -->
+      <div class="logo-wrap">
+        <div class="logo-icon">⚡</div>
+        <div class="logo-text">QuizBlast</div>
+      </div>
+
+      <h1 class="home-heading">Think Fast.<br/>Score Big.</h1>
+      <p class="home-sub">Pick a difficulty, answer quick, and climb the leaderboard!</p>
+
+      <!-- Personal Stats -->
+      <div class="stats-row" id="stats-row">
+        <div class="stat-box">
+          <span class="stat-val" id="stat-games">0</span>
+          <span class="stat-lbl">Games</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-box">
+          <span class="stat-val" id="stat-best">—</span>
+          <span class="stat-lbl">Best Score</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-box">
+          <span class="stat-val" id="stat-streak">0</span>
+          <span class="stat-lbl">Best Streak</span>
+        </div>
+      </div>
+
+      <!-- Difficulty Picker -->
+      <p class="pick-label">Choose difficulty</p>
+      <div class="diff-grid" role="radiogroup" aria-label="Difficulty">
+
+        <button class="diff-btn easy" id="diff-easy" role="radio" aria-checked="false"
+                onclick="selectDifficulty('easy')" onkeydown="diffKeyHandler(event,'easy')">
+          <span class="diff-icon">🌱</span>
+          <span class="diff-title">Easy</span>
+          <span class="diff-info">20s · +10 pts</span>
+          <span class="diff-check" aria-hidden="true">✓</span>
+        </button>
+
+        <button class="diff-btn medium" id="diff-medium" role="radio" aria-checked="false"
+                onclick="selectDifficulty('medium')" onkeydown="diffKeyHandler(event,'medium')">
+          <span class="diff-icon">⚡</span>
+          <span class="diff-title">Medium</span>
+          <span class="diff-info">15s · +20 pts</span>
+          <span class="diff-check" aria-hidden="true">✓</span>
+        </button>
+
+        <button class="diff-btn hard" id="diff-hard" role="radio" aria-checked="false"
+                onclick="selectDifficulty('hard')" onkeydown="diffKeyHandler(event,'hard')">
+          <span class="diff-icon">🔥</span>
+          <span class="diff-title">Hard</span>
+          <span class="diff-info">12s · +30 pts</span>
+          <span class="diff-check" aria-hidden="true">✓</span>
+        </button>
+
+      </div>
+
+      <p class="prev-best" id="prev-best"></p>
+
+      <button class="btn-play" id="btn-play" onclick="startGame()" disabled aria-label="Start Quiz">
+        <span>Let's Play</span>
+        <span class="play-arrow">→</span>
+      </button>
+
+    </div>
+  </section>
+
+  <!-- ===================================================
+       SCREEN 2 — QUIZ
+       =================================================== -->
+  <section id="screen-quiz" class="screen" aria-label="Quiz">
+    <div class="quiz-shell">
+
+      <!-- Top Bar -->
+      <div class="quiz-topbar">
+        <div class="qnum-pill" aria-label="Question number">
+          Q <span id="q-num">1</span>/<span id="q-total">10</span>
+        </div>
+        <div class="diff-tag" id="diff-tag">Easy</div>
+        <button class="btn-quit" id="btn-quit" onclick="quitGame()" aria-label="Quit">✕ Quit</button>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="prog-bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="prog-wrap">
+        <div class="prog-bar-fill" id="prog-fill"></div>
+      </div>
+
+      <!-- Score + Streak Row -->
+      <div class="score-row">
+        <div class="score-pill" aria-label="Score">
+          ⭐ <span id="live-score">0</span> pts
+        </div>
+        <div class="streak-pill" id="streak-pill" aria-label="Streak">
+          🔥 <span id="streak-num">0</span> streak
+        </div>
+      </div>
+
+      <!-- Timer -->
+      <div class="timer-wrap" aria-label="Time remaining">
+        <div class="timer-ring-wrap">
+          <svg class="timer-svg" viewBox="0 0 64 64" aria-hidden="true">
+            <circle class="timer-track" cx="32" cy="32" r="28"/>
+            <circle class="timer-arc"   cx="32" cy="32" r="28" id="timer-arc"/>
+          </svg>
+          <div class="timer-num" id="timer-num">20</div>
+        </div>
+        <span class="timer-label">sec left</span>
+      </div>
+
+      <!-- Question Card -->
+      <div class="q-card" id="q-card">
+        <div class="q-badge" id="q-badge">🌍 Geography</div>
+        <p class="q-text" id="q-text">Loading…</p>
+      </div>
+
+      <!-- Answer Buttons -->
+      <div class="answers-wrap" id="answers-wrap" role="group" aria-label="Answers">
+        <button class="ans-btn" id="ans-0" onclick="pickAnswer(0)">
+          <span class="ans-letter">A</span>
+          <span class="ans-text" id="ans-txt-0">—</span>
+        </button>
+        <button class="ans-btn" id="ans-1" onclick="pickAnswer(1)">
+          <span class="ans-letter">B</span>
+          <span class="ans-text" id="ans-txt-1">—</span>
+        </button>
+        <button class="ans-btn" id="ans-2" onclick="pickAnswer(2)">
+          <span class="ans-letter">C</span>
+          <span class="ans-text" id="ans-txt-2">—</span>
+        </button>
+        <button class="ans-btn" id="ans-3" onclick="pickAnswer(3)">
+          <span class="ans-letter">D</span>
+          <span class="ans-text" id="ans-txt-3">—</span>
+        </button>
+      </div>
+
+      <!-- Lifelines -->
+      <div class="lifelines-wrap" aria-label="Lifelines">
+        <span class="ll-label">Lifelines:</span>
+        <button class="ll-btn" id="ll-fifty" onclick="useLifeline('fifty')" title="Remove 2 wrong answers" aria-label="50/50">
+          ⚡ 50/50
+        </button>
+        <button class="ll-btn" id="ll-skip"  onclick="useLifeline('skip')"  title="Skip without penalty"   aria-label="Skip">
+          ⏭ Skip
+        </button>
+        <button class="ll-btn" id="ll-time"  onclick="useLifeline('time')"  title="Add 8 extra seconds"    aria-label="+8 seconds">
+          ⏱ +8s
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================================================
+       SCREEN 3 — RESULTS
+       =================================================== -->
+  <section id="screen-results" class="screen" aria-label="Results">
+    <div class="results-shell">
+
+      <!-- Big Medal -->
+      <div class="result-medal-wrap">
+        <div class="result-medal" id="result-medal">🏆</div>
+        <div class="result-verdict" id="result-verdict">Genius!</div>
+      </div>
+
+      <!-- Score Card -->
+      <div class="score-card">
+        <div class="score-big" id="score-big">0</div>
+        <div class="score-sub">points scored</div>
+        <div class="score-pct" id="score-pct">0% correct</div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="res-stats">
+        <div class="res-stat correct-s">
+          <div class="res-s-icon">✅</div>
+          <div class="res-s-num" id="res-correct">0</div>
+          <div class="res-s-lbl">Correct</div>
+        </div>
+        <div class="res-stat wrong-s">
+          <div class="res-s-icon">❌</div>
+          <div class="res-s-num" id="res-wrong">0</div>
+          <div class="res-s-lbl">Wrong</div>
+        </div>
+        <div class="res-stat streak-s">
+          <div class="res-s-icon">🔥</div>
+          <div class="res-s-num" id="res-streak">0</div>
+          <div class="res-s-lbl">Best Streak</div>
+        </div>
+      </div>
+
+      <!-- Review -->
+      <div class="review-wrap">
+        <p class="section-head">📋 Question Review</p>
+        <div class="review-list" id="review-list" role="list"></div>
+      </div>
+
+      <!-- Leaderboard -->
+      <div class="lb-wrap">
+        <p class="section-head">🏅 Top Scores</p>
+        <div class="lb-list" id="lb-list" role="list"></div>
+      </div>
+
+      <!-- Actions -->
+      <div class="result-actions">
+        <button class="btn-play-again" id="btn-play-again" onclick="goHome()" aria-label="Play Again">🔁 Play Again</button>
+        <button class="btn-change"     id="btn-change"     onclick="goHome()" aria-label="Change Difficulty">⚙️ Change</button>
+      </div>
+
+    </div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
